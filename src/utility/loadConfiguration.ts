@@ -1,4 +1,4 @@
-import { ReplayConfig } from "../index";
+import {ReplayConfig} from "../types";
 
 export default function loadConfiguration(): ReplayConfig {
     return (
@@ -6,4 +6,12 @@ export default function loadConfiguration(): ReplayConfig {
             cypressReplay: ReplayConfig;
         }
     ).cypressReplay;
+}
+
+export function mergeConfig(config: Partial<ReplayConfig>) {
+    // Allow the configuration to be defined globally and then to be overridden on a test by test basis.
+    return {
+        ...loadConfiguration(),
+        ...config,
+    };
 }
