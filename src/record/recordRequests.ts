@@ -16,13 +16,14 @@ export function makeFilePath(folder: string = Cypress.spec.name, components: str
     return createFixtureFilename(Cypress.config().fixturesFolder as string, folder, components)
 }
 
-export function waitForNetwork(collection: RequestCollection) {
+export function waitForNetwork(collection: any) {
     const { size } = collection.requests;
     cy.wait(0, { log: false }).then(() => {
-        if (collection.requests.size > size) {
-            cy.wrap(collection.resolveMap(), {log: false})
-            waitForNetwork(collection)
-        }
+        return cy.wrap(collection.resolveMap(), { log: false }).then(() => {
+            if (collection.requests.size > size) {
+                return waitForNetwork(collection);
+            }
+        });
     });
 }
 
