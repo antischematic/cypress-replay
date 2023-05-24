@@ -1,4 +1,10 @@
-import {makeFilePath, interceptRequests, startRecording, stopRecording} from "./record/recordRequests";
+import {
+    makeFilePath,
+    interceptRequests,
+    startRecording,
+    stopRecording,
+    waitForNetwork
+} from "./record/recordRequests";
 import { startReplay, interceptReplay, stopReplay} from "./replay/replayRequests";
 import {ReplayConfig} from "./types";
 
@@ -11,13 +17,14 @@ export default function enableCypressReplay(mode: ReplayMode | null = null, conf
     const replayMode = mode !== null ? mode : Cypress.env("REPLAY_RECORD_REQUESTS") ? ReplayMode.Recording : ReplayMode.Replaying;
 
     if (replayMode === ReplayMode.Recording) {
-        beforeEach(() => {
-            startRecording(config)
-            interceptRequests(config);
+        beforeEach(function () {
+            this.__requestCollection = startRecording(config)
+            interceptRequests(this.__requestCollection, config);
         })
 
-        afterEach(() => {
-            stopRecording(makeFilePath())
+        afterEach(function () {
+            waitForNetwork(this.__requestCollection)
+            stopRecording(this.__requestCollection, makeFilePath())
         })
     }
 
@@ -33,5 +40,5 @@ export default function enableCypressReplay(mode: ReplayMode | null = null, conf
     }
 }
 
-export {makeFilePath, interceptRequests, startRecording, stopRecording} from "./record/recordRequests";
+export {makeFilePath, interceptRequests, startRecording, stopRecording, waitForNetwork} from "./record/recordRequests";
 export { startReplay, interceptReplay, stopReplay} from "./replay/replayRequests";
