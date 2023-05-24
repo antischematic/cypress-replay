@@ -50,6 +50,7 @@ export function startReplay(filePath: string, configuration: Partial<ReplayConfi
 }
 
 export function interceptReplay(configuration: Partial<ReplayConfig> = {}) {
+    configuration = mergeConfig(configuration)
     const [requestCollection] = getCurrent()
     if (requestCollection) {
         cy.intercept(new RegExp(configuration.interceptPattern || ".*"), async (req: CyHttpMessages.IncomingHttpRequest) => {
