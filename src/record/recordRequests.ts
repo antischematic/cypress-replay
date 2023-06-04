@@ -6,7 +6,8 @@ import sanitizeHeaders from "../utility/sanitizeHeaders";
 import createFixtureFilename from "../utility/createFixtureFilename";
 import EnvComponentManager from "../utility/EnvComponentManager";
 
-export function startRecording(config: ReplayConfig) {
+export function startRecording(config: ReplayConfig = {}) {
+    Cypress.config('cypressReplayRecordMode' as any, true)
     config = mergeConfig(config)
     const dynamicComponentManager = EnvComponentManager.fromEnvironment(config.dynamicRequestEnvComponents || [], Cypress.env);
     return new RequestCollection(dynamicComponentManager)
@@ -16,43 +17,51 @@ export function makeFilePath(folder: string = Cypress.spec.name, components: str
     return createFixtureFilename(Cypress.config().fixturesFolder as string, folder, components)
 }
 
-export function waitForNetwork(collection: any) {
-    const { size } = collection.requests;
-    cy.wait(0, { log: false }).then(() => {
-        return cy.wrap(collection.resolveMap(), { log: false }).then(() => {
-            if (collection.requests.size > size) {
-                return waitForNetwork(collection);
-            }
-        });
-    });
+export function waitForNetwork(collection: RequestCollection): any {
+    return cy
+        .window({ log: false })
+        .then(({ fetch }) => {
+            let size = collection.requests.size
+            return cy
+                .wrap(fetch('//flush/'), { log: false })
+                .then(() => Promise.all(collection.pending))
+                .then(() => {
+                    if (collection.requests.size > size) {
+                        return waitForNetwork(collection)
+                    }
+                })
+        })
 }
 
 export function stopRecording(requestCollection: RequestCollection, filePath: string) {
-    cy.then(() => requestCollection.resolveMap()).then((map) => {
+    Cypress.config('cypressReplayRecordMode' as any, false)
+    cy.then(() => {
         cy.writeFile(
             filePath,
-            JSON.stringify(map, null, 4)
+            JSON.stringify(requestCollection.resolveMap(), null, 4)
         );
     });
 }
 
-export function interceptRequests(requestCollection: RequestCollection, config: ReplayConfig) {
+export function interceptRequests(requestCollection: RequestCollection, config: ReplayConfig = {}) {
     config = mergeConfig(config)
+    requestCollection.pending = []
+    cy.intercept(/https?:\/\/flush\//, { statusCode: 200, delay: 16, log: false })
     cy.intercept(new RegExp(config.interceptPattern || ".*"), (request: CyHttpMessages.IncomingHttpRequest) => {
+        if (request.url.match(/https?:\/\/flush\//)) return
         const startTime = Date.now();
-        const promise = new Promise<StaticResponse>((resolve) => {
-            request.on("response", (response: CyHttpMessages.IncomingResponse) => {
-                resolve({
+        requestCollection.pending.push(new Promise<void>((resolve) => {
+            request.on('response', (response) => {
+                requestCollection.pushIncomingRequest(request, {
                     body: response.body,
                     headers: sanitizeHeaders(response.headers),
                     statusCode: response.statusCode,
                     // Including a delay that matches how long the server took to response will help make tests more
                     // deterministic.
                     delay: Date.now() - startTime,
-                });
+                })
+                resolve()
             });
-        });
-
-        requestCollection.pushIncomingRequest(request, promise);
-    })
+        }));
+    }).as('cypress-replay')
 }

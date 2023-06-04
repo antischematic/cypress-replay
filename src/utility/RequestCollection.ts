@@ -4,7 +4,7 @@ import EnvComponentManager from "./EnvComponentManager";
 import IncomingRequest = CyHttpMessages.IncomingRequest;
 import Logger, { LoggerInterface } from "./Logger";
 
-export type RequestMap = Map<string, Promise<StaticResponse>[]>;
+export type RequestMap = Map<string, StaticResponse[]>;
 export type RequestMapFixture = {
     [key: string]: (StaticResponse & { insertAtIndex?: number })[];
 };
@@ -15,12 +15,20 @@ export type ResponseMap = {
 export default class RequestCollection {
     private envComponentManager: EnvComponentManager;
     public requests: RequestMap;
-    private logger: LoggerInterface;
+    public replayedRequests: Set<any>
+    public logger: LoggerInterface;
+    pending: Promise<void>[];
 
     constructor(envComponentManager: EnvComponentManager, logger?: LoggerInterface) {
         this.envComponentManager = envComponentManager;
         this.logger = logger || new Logger();
         this.requests = new Map();
+        this.replayedRequests = new Set();
+        this.pending = []
+    }
+
+    pushReplayedRequest(promise: Promise<void>) {
+        this.replayedRequests.add(promise)
     }
 
     appendFromFixture(fixture: RequestMapFixture) {
@@ -33,15 +41,15 @@ export default class RequestCollection {
                 // some control over where manually authored fixtures are inserted, otherwise they'll be
                 // appended in the order they are encountered.
                 if (request.insertAtIndex) {
-                    this.requests.get(key)!.splice(request.insertAtIndex, 0, Promise.resolve(request));
+                    this.requests.get(key)!.splice(request.insertAtIndex, 0, request);
                 } else {
-                    this.requests.get(key)!.push(Promise.resolve(request));
+                    this.requests.get(key)!.push(request);
                 }
             });
         });
     }
 
-    pushIncomingRequest(request: IncomingRequest, response: Promise<StaticResponse>) {
+    pushIncomingRequest(request: IncomingRequest, response: StaticResponse) {
         const key = this.envComponentManager.removeDynamicComponents(createRequestKey(request));
         if (!this.requests.has(key)) {
             this.requests.set(key, []);
@@ -59,10 +67,10 @@ export default class RequestCollection {
         return Promise.resolve(this.requests.get(key)!.shift()!);
     }
 
-    async resolveMap(): Promise<ResponseMap> {
+    resolveMap(): ResponseMap {
         const responses: ResponseMap = {};
         for (const [key, response] of this.requests) {
-            responses[key] = await Promise.all(response);
+            responses[key] = response
         }
         return responses;
     }

@@ -1,6 +1,6 @@
 {
   "name": "@antischematic/cypress-replay",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "author": {
@@ -9,7 +9,7 @@
   "license": "MIT",
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "cypress": "^11.1.0",
+    "cypress": "^12.13.0",
     "jest": "^29.3.1",
     "prettier": "^2.8.1",
     "ts-jest": "^29.0.3",

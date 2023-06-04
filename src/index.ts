@@ -5,7 +5,7 @@ import {
     stopRecording,
     waitForNetwork
 } from "./record/recordRequests";
-import { startReplay, interceptReplay, stopReplay} from "./replay/replayRequests";
+import {startReplay, interceptReplay, stopReplay, waitForReplay} from "./replay/replayRequests";
 import {ReplayConfig} from "./types";
 
 export enum ReplayMode {
@@ -29,16 +29,17 @@ export default function enableCypressReplay(mode: ReplayMode | null = null, conf
     }
 
     if (replayMode === ReplayMode.Replaying) {
-        beforeEach(() => {
-            startReplay(makeFilePath(), config)
-            interceptReplay(config)
+        beforeEach(function () {
+            this.__requestCollection = startReplay(makeFilePath(), config)
+            interceptReplay(this.__requestCollection, config)
         })
 
-        afterEach(() => {
-            stopReplay()
+        afterEach(function () {
+            waitForReplay(this.__requestCollection)
+            stopReplay(this.__requestCollection)
         })
     }
 }
 
 export {makeFilePath, interceptRequests, startRecording, stopRecording, waitForNetwork} from "./record/recordRequests";
-export { startReplay, interceptReplay, stopReplay} from "./replay/replayRequests";
+export { startReplay, interceptReplay, stopReplay, waitForReplay} from "./replay/replayRequests";
