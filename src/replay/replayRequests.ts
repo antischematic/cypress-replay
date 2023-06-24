@@ -53,7 +53,7 @@ export function interceptReplay(chain: Chainable<RequestCollection>, configurati
         configuration = mergeConfig(configuration)
         cy.intercept(new RegExp(configuration.interceptPattern || ".*"), async (req: CyHttpMessages.IncomingHttpRequest) => {
             const fixtureResponse = requestCollection.shiftRequest(req);
-            if (fixtureResponse && fixtureResponse.didRespond) {
+            if (fixtureResponse && fixtureResponse.didRespond !== false) {
                 const promise = new Promise<void>((resolve) => {
                     req.on("response", () => {
                         resolve()
