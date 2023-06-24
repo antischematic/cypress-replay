@@ -1,1 +1,119 @@
-{}
+{
+    "GET:https://jsonplaceholder.typicode.com/todos/5": [
+        {
+            "body": {
+                "userId": 1,
+                "id": 5,
+                "title": "laboriosam mollitia et enim quasi adipisci quia provident illum",
+                "completed": false
+            },
+            "headers": {
+                "date": "Sat, 24 Jun 2023 07:31:46 GMT",
+                "content-type": "application/json; charset=utf-8",
+                "transfer-encoding": "chunked",
+                "connection": "keep-alive",
+                "x-powered-by": "Express",
+                "x-ratelimit-limit": "1000",
+                "x-ratelimit-remaining": "992",
+                "x-ratelimit-reset": "1687590587",
+                "access-control-allow-origin": "https://example.com",
+                "vary": "Origin, Accept-Encoding",
+                "access-control-allow-credentials": "true",
+                "cache-control": "max-age=43200",
+                "pragma": "no-cache",
+                "expires": "-1",
+                "x-content-type-options": "nosniff",
+                "etag": "W/\"80-nIDrpgGIpb97HlRnMUJPolcZWGI\"",
+                "via": "1.1 vegur",
+                "cf-cache-status": "HIT",
+                "age": "1354",
+                "report-to": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=N%2BiKYW9n0jpn8eH5xVnKgGHRH6RK4qGkM7HEJvTeiAx17CkZLT5BMt%2Ft0dKVO1lKRhaXD090iaN7e0OpvxcoJB6Q1jzZhF1Rq0UKFFb3PxVRpsQHyaCgx8I%2BaJPSKPiTYKPoddyqrvqLCt0lwvlHb4kDmjAN0qSShruM\"}],\"group\":\"cf-nel\",\"max_age\":604800}",
+                "nel": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}",
+                "server": "cloudflare",
+                "cf-ray": "7dc345e74c0601f2-SIN",
+                "alt-svc": "h3=\":443\"; ma=86400"
+            },
+            "statusCode": 200,
+            "delay": 132,
+            "didRespond": true
+        }
+    ],
+    "GET:https://jsonplaceholder.typicode.com/todos/6": [
+        {
+            "body": {
+                "userId": 1,
+                "id": 6,
+                "title": "qui ullam ratione quibusdam voluptatem quia omnis",
+                "completed": false
+            },
+            "headers": {
+                "date": "Sat, 24 Jun 2023 07:31:46 GMT",
+                "content-type": "application/json; charset=utf-8",
+                "transfer-encoding": "chunked",
+                "connection": "keep-alive",
+                "x-powered-by": "Express",
+                "x-ratelimit-limit": "1000",
+                "x-ratelimit-remaining": "995",
+                "x-ratelimit-reset": "1687591367",
+                "access-control-allow-origin": "https://example.com",
+                "vary": "Origin, Accept-Encoding",
+                "access-control-allow-credentials": "true",
+                "cache-control": "max-age=43200",
+                "pragma": "no-cache",
+                "expires": "-1",
+                "x-content-type-options": "nosniff",
+                "etag": "W/\"72-yfiIPXjthTBh1/X1p+FVUbIXZKU\"",
+                "via": "1.1 vegur",
+                "cf-cache-status": "HIT",
+                "age": "595",
+                "report-to": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=Zjj5u0N3IBZJkUD%2F%2FZ2qGj2MJLYmdCo86JxHnZAORXEayHwzPyK%2Fg79OEiEPufw6hVSN5IDJGUzj%2FhSVf91rVDfOnRkp4zVSMaGRQq0wIOHQHmyzjiPHJ%2FGmPyDUYl2f%2FOZtQkdSkHY%2BGzfZPL5%2BpF1Ku%2BqHKbdQ7Fpf\"}],\"group\":\"cf-nel\",\"max_age\":604800}",
+                "nel": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}",
+                "server": "cloudflare",
+                "cf-ray": "7dc345e87cb401f2-SIN",
+                "alt-svc": "h3=\":443\"; ma=86400"
+            },
+            "statusCode": 200,
+            "delay": 142,
+            "didRespond": true
+        }
+    ],
+    "GET:https://jsonplaceholder.typicode.com/todos/7": [
+        {
+            "body": {
+                "userId": 1,
+                "id": 7,
+                "title": "illo expedita consequatur quia in",
+                "completed": false
+            },
+            "headers": {
+                "date": "Sat, 24 Jun 2023 07:31:47 GMT",
+                "content-type": "application/json; charset=utf-8",
+                "transfer-encoding": "chunked",
+                "connection": "keep-alive",
+                "x-powered-by": "Express",
+                "x-ratelimit-limit": "1000",
+                "x-ratelimit-remaining": "986",
+                "x-ratelimit-reset": "1687590707",
+                "access-control-allow-origin": "https://example.com",
+                "vary": "Origin, Accept-Encoding",
+                "access-control-allow-credentials": "true",
+                "cache-control": "max-age=43200",
+                "pragma": "no-cache",
+                "expires": "-1",
+                "x-content-type-options": "nosniff",
+                "etag": "W/\"62-/Pgf5pm8Ua5GXHWaMOYWqm3ckQs\"",
+                "via": "1.1 vegur",
+                "cf-cache-status": "HIT",
+                "age": "1244",
+                "report-to": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=VNVxq2MLJeQ3y3N%2FE2cL2CKQEOUm0%2FKncDUL0Tx%2FcCKn4NtcBPOk7tc%2Bwl0nFWjXQ4uUIZYzaQ%2Ftxaz1WWwRMQw1YbmDlHR6ZGJgSpTwovzOCUnbM8a7FAqx4EXKI4svgLqLYFxpT7qN5v2ewUWvZuTccP1qDzHHFE4B\"}],\"group\":\"cf-nel\",\"max_age\":604800}",
+                "nel": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}",
+                "server": "cloudflare",
+                "cf-ray": "7dc345ebceea01f2-SIN",
+                "alt-svc": "h3=\":443\"; ma=86400"
+            },
+            "statusCode": 200,
+            "delay": 151,
+            "didRespond": true
+        }
+    ]
+}

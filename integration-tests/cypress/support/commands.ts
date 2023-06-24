@@ -37,7 +37,6 @@ declare global {
 export {}
 
 Cypress.Commands.add('waitOnRecord', (delayMs) => {
-    // console.log('sdfsdfsd', Cypress.config('cypressReplayRecordMode' as any))
     if (Cypress.config('cypressReplayRecordMode' as any)) {
         cy.wait(delayMs, { log: false })
     }

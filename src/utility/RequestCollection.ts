@@ -1,76 +1,121 @@
-import { CyHttpMessages, StaticResponse } from "cypress/types/net-stubbing";
+import {CyHttpMessages, StaticResponse} from "cypress/types/net-stubbing";
 import createRequestKey from "./createRequestKey";
 import EnvComponentManager from "./EnvComponentManager";
 import IncomingRequest = CyHttpMessages.IncomingRequest;
 import Logger, { LoggerInterface } from "./Logger";
 
-export type RequestMap = Map<string, StaticResponse[]>;
+interface RecordedResponse extends StaticResponse {
+    insertAtIndex?: number
+    didRespond?: boolean
+}
+
+export type RequestMap = Map<string, WrappedResponse[]>;
 export type RequestMapFixture = {
-    [key: string]: (StaticResponse & { insertAtIndex?: number })[];
+    [key: string]: RecordedResponse[];
 };
 export type ResponseMap = {
-    [key: string]: StaticResponse[];
+    [key: string]: RecordedResponse[];
 };
+
+export interface WrappedResponse {
+    promise: Promise<RecordedResponse>
+    response?: RecordedResponse
+}
+
+function wrapPromise(promise: Promise<RecordedResponse>) {
+    const wrapped: WrappedResponse = {
+        promise: promise.then(value => {
+            wrapped.response = value
+            return value
+        }),
+        response: undefined,
+    }
+    return wrapped
+}
 
 export default class RequestCollection {
     private envComponentManager: EnvComponentManager;
+    private markReplayDone!: () => void
     public requests: RequestMap;
-    public replayedRequests: Set<any>
+    public responses: ResponseMap;
     public logger: LoggerInterface;
-    pending: Promise<void>[];
+    public replayDone: Promise<void>
 
-    constructor(envComponentManager: EnvComponentManager, logger?: LoggerInterface) {
+    constructor(envComponentManager: EnvComponentManager, logger: LoggerInterface) {
         this.envComponentManager = envComponentManager;
-        this.logger = logger || new Logger();
+        this.logger = logger
         this.requests = new Map();
-        this.replayedRequests = new Set();
-        this.pending = []
+        this.responses = {}
+        this.replayDone = new Promise<void>(resolve => {
+            this.markReplayDone = resolve
+        })
     }
 
     pushReplayedRequest(promise: Promise<void>) {
-        this.replayedRequests.add(promise)
+        promise.finally(() => {
+            this.checkDone()
+        })
+    }
+
+    isDone() {
+        return Object.values(this.responses).every(responses => responses.length === 0)
+    }
+
+    checkDone() {
+        if (this.isDone()) {
+            this.markReplayDone()
+        }
     }
 
     appendFromFixture(fixture: RequestMapFixture) {
         Object.keys(fixture).forEach((key) => {
-            if (!this.requests.has(key)) {
-                this.requests.set(key, []);
+            if (!(key in this.responses)) {
+                this.responses[key] = [];
             }
-            fixture[key].forEach((request) => {
+            fixture[key].forEach((response) => {
                 // Allow requests in fixture files to specify an index where they'll be inserted. This gives
                 // some control over where manually authored fixtures are inserted, otherwise they'll be
                 // appended in the order they are encountered.
-                if (request.insertAtIndex) {
-                    this.requests.get(key)!.splice(request.insertAtIndex, 0, request);
+                if (response.insertAtIndex) {
+                    this.responses[key].splice(response.insertAtIndex, 0, response);
                 } else {
-                    this.requests.get(key)!.push(request);
+                    this.responses[key].push(response);
                 }
             });
         });
     }
 
-    pushIncomingRequest(request: IncomingRequest, response: StaticResponse) {
+    pushIncomingRequest(request: IncomingRequest, response: Promise<RecordedResponse>) {
         const key = this.envComponentManager.removeDynamicComponents(createRequestKey(request));
         if (!this.requests.has(key)) {
             this.requests.set(key, []);
         }
-        this.requests.get(key)!.push(response);
+        this.requests.get(key)!.push(wrapPromise(response));
     }
 
-    shiftRequest(request: IncomingRequest): Promise<StaticResponse | null> {
+    shiftRequest(request: IncomingRequest): RecordedResponse | null {
         const key = this.envComponentManager.removeDynamicComponents(createRequestKey(request));
-        if (!this.requests.has(key) || this.requests.get(key)!.length === 0) {
+        if (!(key in this.responses) || this.responses[key].length === 0) {
             this.logger.push("Request missing from fixture", { key });
-            return Promise.resolve(null);
+            return null
         }
         this.logger.push("Request found in fixture", { key });
-        return Promise.resolve(this.requests.get(key)!.shift()!);
+        return this.responses[key].shift()!;
     }
 
     resolveMap(): ResponseMap {
-        const responses: ResponseMap = {};
-        for (const [key, response] of this.requests) {
-            responses[key] = response
+        const responses = {} as any
+        for (const [key, requests] of this.requests) {
+            responses[key] = requests.map(request => {
+                return request.response
+                    ? {
+                        ...request.response,
+                        didRespond: true
+                    }
+                    : {
+                        didRespond: false
+                    }
+            })
         }
         return responses;
     }

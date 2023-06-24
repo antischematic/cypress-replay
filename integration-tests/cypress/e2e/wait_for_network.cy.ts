@@ -4,9 +4,9 @@ import enableCypressReplay, {
     makeFilePath,
     startRecording, startReplay,
     stopRecording, stopReplay,
-    waitForNetwork, waitForReplay
+    waitForReplay
 } from "../../../lib";
-import {ReplayMode} from "../../../src";
+import {ReplayMode} from "../../../src/types";
 
 function runTests() {
     let timeouts = [Math.random() * 1000, Math.random() * 1000, Math.random() * 1000, Math.random() * 1000, Math.random() * 1000, Math.random() * 1000, Math.random() * 1000]
@@ -14,35 +14,22 @@ function runTests() {
     function setupSuiteLevelHooks(mode: ReplayMode) {
         let collection: any
         if (mode === ReplayMode.Recording) {
-            before(() => {
-                collection = startRecording()
-            })
-
             beforeEach(() => {
+                collection = startRecording()
                 interceptRequests(collection)
             })
 
             afterEach(() => {
-                waitForNetwork(collection)
-            })
-
-            after(() => {
                 stopRecording(collection, makeFilePath(Cypress.spec.name, ['Scenario']))
             })
         } else {
-            before(() => {
-                collection = startReplay(makeFilePath(Cypress.spec.name, ['Scenario']), {responseDelayOverride: 0})
-            })
-
             beforeEach(() => {
+                collection = startReplay(makeFilePath(Cypress.spec.name, ['Scenario']), {responseDelayOverride: 0})
                 interceptReplay(collection)
             })
 
             afterEach(() => {
                 waitForReplay(collection)
-            })
-
-            after(() => {
                 stopReplay(collection)
             })
         }
