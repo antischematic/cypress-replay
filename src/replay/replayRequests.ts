@@ -1,6 +1,7 @@
 import {CyHttpMessages} from "cypress/types/net-stubbing";
 import {ReplayConfig, ReplayMode} from "../types";
 import {mergeConfig} from "../utility/loadConfiguration";
+import {newTestId, patchWindow} from "../utility/patchWindow";
 import RequestCollection from "../utility/RequestCollection";
 import { createMergedFixtureFilename } from "../utility/createFixtureFilename";
 import EnvComponentManager from "../utility/EnvComponentManager";
@@ -13,7 +14,9 @@ export function startReplay(filePath: string, configuration: Partial<ReplayConfi
     const collection = new RequestCollection(dynamicComponentManager, logger);
 
     Cypress.config('cypressReplayRecordMode' as any, ReplayMode.Replaying)
+    Cypress.on('window:before:load', patchWindow)
 
+    cy.window().then(patchWindow)
     cy.readFile(filePath)
         .then((fileContents) => {
             collection.appendFromFixture(fileContents);
@@ -46,13 +49,16 @@ export function startReplay(filePath: string, configuration: Partial<ReplayConfi
 
 let suspendedRequests = new Set<() => void>()
 
-const FLUSH = 'http://flush'
-
 export function interceptReplay(requestCollection: RequestCollection, configuration: Partial<ReplayConfig> = {}) {
     configuration = mergeConfig(configuration)
+    const testId = newTestId()
     cy.intercept(new RegExp(configuration.interceptPattern || ".*"), async (req: CyHttpMessages.IncomingHttpRequest) => {
+        if (req.headers['x-cypress-test-id'] !== testId) {
+            await new Promise<void>(resolve => suspendedRequests.add(resolve))
+            return req.destroy()
+        }
         const fixtureResponse = requestCollection.shiftRequest(req);
-        if (fixtureResponse && fixtureResponse.didRespond !== false) {
+        if (fixtureResponse && fixtureResponse.hasResponse !== false) {
             const promise = new Promise<void>((resolve) => {
                 req.on("response", () => {
                     resolve()
@@ -76,7 +82,6 @@ export function interceptReplay(requestCollection: RequestCollection, configurat
             req.destroy()
         }
     })
-    cy.intercept(FLUSH, { log: false, statusCode: 200, delay: 0 })
 }
 
 export function isReplaying() {
@@ -85,10 +90,10 @@ export function isReplaying() {
 
 export function stopReplay(collection: RequestCollection, config: Partial<ReplayConfig> = {}) {
     Cypress.config('cypressReplayRecordMode' as any, null)
+    Cypress.off('window:before:load', patchWindow)
     if (config.waitForReplay) {
         cy.then(() => collection.isDone() || collection.replayDone)
     }
-    cy.window().then(window => window.fetch(FLUSH))
     cy.then(() => {
         collection.logger.getAll().map((log) => cy.log(`cypress-replay: ${log.message}\n\n${JSON.stringify(log.context)}`));
         for (const resolve of suspendedRequests) {

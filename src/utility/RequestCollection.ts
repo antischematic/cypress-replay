@@ -6,7 +6,7 @@ import Logger, { LoggerInterface } from "./Logger";
 
 interface RecordedResponse extends StaticResponse {
     insertAtIndex?: number
-    didRespond?: boolean
+    hasResponse?: boolean
 }
 
 export type RequestMap = Map<string, WrappedResponse[]>;
@@ -20,14 +20,16 @@ export type ResponseMap = {
 export interface WrappedResponse {
     promise: Promise<RecordedResponse>
     response?: RecordedResponse
+    request: any
 }
 
-function wrapPromise(promise: Promise<RecordedResponse>) {
+function wrapPromise(promise: Promise<RecordedResponse>, request: any) {
     const wrapped: WrappedResponse = {
         promise: promise.then(value => {
             wrapped.response = value
             return value
         }),
+        request,
         response: undefined,
     }
     return wrapped
@@ -90,7 +92,7 @@ export default class RequestCollection {
         if (!this.requests.has(key)) {
             this.requests.set(key, []);
         }
-        this.requests.get(key)!.push(wrapPromise(response));
+        this.requests.get(key)!.push(wrapPromise(response, request));
     }
 
     shiftRequest(request: IncomingRequest): RecordedResponse | null {
@@ -107,14 +109,11 @@ export default class RequestCollection {
         const responses = {} as any
         for (const [key, requests] of this.requests) {
             responses[key] = requests.map(request => {
-                return request.response
-                    ? {
-                        ...request.response,
-                        didRespond: true
-                    }
-                    : {
-                        didRespond: false
-                    }
+                return {
+                    hasResponse: !!request.response,
+                    ...request.response,
+                    request: request.request,
+                }
             })
         }
         return responses;

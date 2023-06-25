@@ -28,7 +28,7 @@ function runTests() {
             })
 
             afterEach(() => {
-                stopReplay(collection, { waitForReplay: false })
+                stopReplay(collection, { waitForReplay: true })
             })
         }
     }
@@ -42,10 +42,16 @@ function runTests() {
             }
 
             it('Should fetch and replay everything here', () => {
-                cy.window().then(({fetch}) => {
+                cy.window().then(({fetch, XMLHttpRequest }) => {
                     fetch('https://jsonplaceholder.cypress.io/todos/1').catch(() => {})
                     fetch('https://jsonplaceholder.cypress.io/todos/2').catch(() => {})
-                    fetch('https://jsonplaceholder.cypress.io/todos/3').catch(() => {})
+
+                    const req = new XMLHttpRequest();
+                    req.addEventListener("load", () => {
+                        console.log('XMLHttpRequest loaded')
+                    });
+                    req.open("GET", "https://jsonplaceholder.cypress.io/todos/3");
+                    req.send();
 
                     setTimeout(() => {
                         fetch('https://jsonplaceholder.cypress.io/todos/4').catch(() => {})
