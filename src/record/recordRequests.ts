@@ -10,33 +10,29 @@ import Chainable = Cypress.Chainable;
 
 export function startRecording(config: ReplayConfig = {}) {
     Cypress.config('cypressReplayRecordMode' as any, ReplayMode.Recording)
-    return cy.then(() => {
-        config = mergeConfig(config)
-        const dynamicComponentManager = EnvComponentManager.fromEnvironment(config.dynamicRequestEnvComponents || [], Cypress.env);
-        return new RequestCollection(dynamicComponentManager, new Logger)
-    })
+    config = mergeConfig(config)
+    const dynamicComponentManager = EnvComponentManager.fromEnvironment(config.dynamicRequestEnvComponents || [], Cypress.env);
+    return new RequestCollection(dynamicComponentManager, new Logger)
 }
 
 export function makeFilePath(folder: string = Cypress.spec.name, components: string[] = Cypress.currentTest.titlePath) {
     return createFixtureFilename(Cypress.config().fixturesFolder as string, folder, components)
 }
 
-export function stopRecording(chain: Chainable<RequestCollection>, filePath: string) {
+export function stopRecording(requestCollection: RequestCollection, filePath: string) {
     Cypress.config('cypressReplayRecordMode' as any, null)
-    chain.then((requestCollection) => {
-        cy.writeFile(
-            filePath,
-            JSON.stringify(requestCollection.resolveMap(), null, 4)
-        );
-    });
+    cy.writeFile(
+        filePath,
+        JSON.stringify(requestCollection.resolveMap(), null, 4)
+    );
 }
 
 export function isRecording() {
     return Cypress.config('cypressReplayRecordMode' as any) === ReplayMode.Recording
 }
 
-export function interceptRequests(chain: Chainable<RequestCollection>, config: ReplayConfig = {}) {
-    chain.then((requestCollection) => {
+export function interceptRequests(requestCollection: RequestCollection, config: ReplayConfig = {}) {
+    cy.then(() => {
         config = mergeConfig(config)
         cy.intercept(new RegExp(config.interceptPattern || ".*"), (request: CyHttpMessages.IncomingHttpRequest) => {
             const startTime = Date.now();

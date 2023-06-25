@@ -15,7 +15,7 @@ export function startReplay(filePath: string, configuration: Partial<ReplayConfi
 
     Cypress.config('cypressReplayRecordMode' as any, ReplayMode.Replaying)
 
-    return cy.readFile(filePath)
+    cy.readFile(filePath)
         .then((fileContents) => {
             collection.appendFromFixture(fileContents);
             return collection;
@@ -41,15 +41,16 @@ export function startReplay(filePath: string, configuration: Partial<ReplayConfi
                 }),
                 {log: false}
             )
-        ).then(() => collection)
+        )
+    return collection
 }
 
-export function waitForReplay(chain: Chainable<RequestCollection>): any {
-    return chain.then((collection) => collection.isDone() || collection.replayDone)
+export function waitForReplay(collection: RequestCollection): any {
+    return cy.then(() => collection.isDone() || collection.replayDone)
 }
 
-export function interceptReplay(chain: Chainable<RequestCollection>, configuration: Partial<ReplayConfig> = {}) {
-    chain.then(requestCollection => {
+export function interceptReplay(requestCollection: RequestCollection, configuration: Partial<ReplayConfig> = {}) {
+    cy.then(() => {
         configuration = mergeConfig(configuration)
         cy.intercept(new RegExp(configuration.interceptPattern || ".*"), async (req: CyHttpMessages.IncomingHttpRequest) => {
             const fixtureResponse = requestCollection.shiftRequest(req);
@@ -84,9 +85,9 @@ export function isReplaying() {
     return Cypress.config('cypressReplayRecordMode' as any) === ReplayMode.Replaying
 }
 
-export function stopReplay(chain: Chainable<RequestCollection>) {
+export function stopReplay(collection: RequestCollection) {
     Cypress.config('cypressReplayRecordMode' as any, null)
-    chain.then((collection) => {
+    cy.then(() => {
         collection.logger.getAll().map((log) => cy.log(`cypress-replay: ${log.message}\n\n${JSON.stringify(log.context)}`));
     })
 }
