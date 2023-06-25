@@ -27,6 +27,8 @@
 //
 
 
+import {ReplayMode} from "../../../lib";
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -37,7 +39,7 @@ declare global {
 export {}
 
 Cypress.Commands.add('waitOnRecord', (delayMs) => {
-    if (Cypress.config('cypressReplayRecordMode' as any)) {
+    if (Cypress.config('cypressReplayRecordMode' as any) === ReplayMode.Recording) {
         cy.wait(delayMs, { log: false })
     }
 })

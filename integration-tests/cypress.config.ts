@@ -3,7 +3,7 @@ import { defineConfig } from "cypress";
 export default defineConfig({
   // @ts-ignore
   cypressReplay: {
-    // interceptPattern: "(jsonplaceholder.typicode.com)",
+    interceptPattern: "(jsonplaceholder.cypress.io)",
     dynamicRequestEnvComponents: ["API_URL"],
     responseDelayOverride: 0
   },

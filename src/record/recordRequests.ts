@@ -18,8 +18,12 @@ export function makeFilePath(folder: string = Cypress.spec.name, components: str
     return createFixtureFilename(Cypress.config().fixturesFolder as string, folder, components)
 }
 
-export function stopRecording(requestCollection: RequestCollection, filePath: string) {
+export function stopRecording(requestCollection: RequestCollection, filePath: string, config: ReplayConfig = {}) {
+    config = mergeConfig(config)
     Cypress.config('cypressReplayRecordMode' as any, null)
+    if (config.waitForRecord) {
+        cy.wait(config.waitForRecord)
+    }
     cy.writeFile(
         filePath,
         JSON.stringify(requestCollection.resolveMap(), null, 4)
@@ -34,8 +38,9 @@ export function interceptRequests(requestCollection: RequestCollection, config: 
     config = mergeConfig(config)
     cy.intercept(new RegExp(config.interceptPattern || ".*"), (request: CyHttpMessages.IncomingHttpRequest) => {
         const startTime = Date.now();
-        requestCollection.pushIncomingRequest(request, new Promise<StaticResponse>(resolve => {
-            request.on('response', (response) => {
+
+        requestCollection.pushIncomingRequest(request, new Promise<StaticResponse>((resolve) => {
+            request.continue((response) => {
                 resolve({
                     body: response.body,
                     headers: sanitizeHeaders(response.headers),

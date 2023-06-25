@@ -4,7 +4,6 @@ import enableCypressReplay, {
     makeFilePath,
     startRecording, startReplay,
     stopRecording, stopReplay,
-    waitForReplay
 } from "../../../lib";
 import {ReplayMode} from "../../../src/types";
 
@@ -29,8 +28,7 @@ function runTests() {
             })
 
             afterEach(() => {
-                waitForReplay(collection)
-                stopReplay(collection)
+                stopReplay(collection, { waitForReplay: true })
             })
         }
     }
@@ -45,26 +43,26 @@ function runTests() {
 
             it('Should fetch and replay everything here', () => {
                 cy.window().then(({fetch}) => {
-                    fetch('https://jsonplaceholder.typicode.com/todos/1').catch(() => {})
-                    fetch('https://jsonplaceholder.typicode.com/todos/2').catch(() => {})
-                    fetch('https://jsonplaceholder.typicode.com/todos/3').catch(() => {})
+                    fetch('https://jsonplaceholder.cypress.io/todos/1').catch(() => {})
+                    fetch('https://jsonplaceholder.cypress.io/todos/2').catch(() => {})
+                    fetch('https://jsonplaceholder.cypress.io/todos/3').catch(() => {})
 
                     setTimeout(() => {
-                        fetch('https://jsonplaceholder.typicode.com/todos/4').catch(() => {})
+                        fetch('https://jsonplaceholder.cypress.io/todos/4').catch(() => {})
                     }, timeouts[0])
 
                     setTimeout(() => {
-                        fetch('https://jsonplaceholder.typicode.com/todos/5').catch(() => {})
+                        fetch('https://jsonplaceholder.cypress.io/todos/5').catch(() => {})
                     }, timeouts[1])
 
                     setTimeout(() => {
-                        fetch('https://jsonplaceholder.typicode.com/todos/6').then(() => {
+                        fetch('https://jsonplaceholder.cypress.io/todos/6').then(() => {
                             setTimeout(() => {
-                                fetch('https://jsonplaceholder.typicode.com/todos/7').then(() => {
+                                fetch('https://jsonplaceholder.cypress.io/todos/7').then(() => {
                                     setTimeout(() => {
-                                        fetch('https://jsonplaceholder.typicode.com/todos/8').catch(() => {})
-                                        fetch('https://jsonplaceholder.typicode.com/todos/9').catch(() => {})
-                                        fetch('https://jsonplaceholder.typicode.com/todos/10').catch(() => {})
+                                        fetch('https://jsonplaceholder.cypress.io/todos/8').catch(() => {})
+                                        fetch('https://jsonplaceholder.cypress.io/todos/9').catch(() => {})
+                                        fetch('https://jsonplaceholder.cypress.io/todos/10').catch(() => {})
                                     }, timeouts[2])
                                 }).catch(() => {})
                             }, timeouts[3])
@@ -83,10 +81,10 @@ function runTests() {
         })
     }
 
-    // runTest(ReplayMode.Recording)
-    // runTest(ReplayMode.Replaying)
-    runTest(ReplayMode.Recording, true)
-    runTest(ReplayMode.Replaying, true)
+    runTest(ReplayMode.Recording)
+    runTest(ReplayMode.Replaying)
+    // runTest(ReplayMode.Recording, true)
+    // runTest(ReplayMode.Replaying, true)
 }
 
 for (let i = 0; i < 10; i++) {

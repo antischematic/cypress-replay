@@ -44,10 +44,6 @@ export function startReplay(filePath: string, configuration: Partial<ReplayConfi
     return collection
 }
 
-export function waitForReplay(collection: RequestCollection): any {
-    return cy.then(() => collection.isDone() || collection.replayDone)
-}
-
 let suspendedRequests = new Set<() => void>()
 
 export function interceptReplay(requestCollection: RequestCollection, configuration: Partial<ReplayConfig> = {}) {
@@ -84,8 +80,11 @@ export function isReplaying() {
     return Cypress.config('cypressReplayRecordMode' as any) === ReplayMode.Replaying
 }
 
-export function stopReplay(collection: RequestCollection) {
+export function stopReplay(collection: RequestCollection, config: Partial<ReplayConfig> = {}) {
     Cypress.config('cypressReplayRecordMode' as any, null)
+    if (config.waitForReplay) {
+        cy.then(() => collection.isDone() || collection.replayDone)
+    }
     cy.then(() => {
         collection.logger.getAll().map((log) => cy.log(`cypress-replay: ${log.message}\n\n${JSON.stringify(log.context)}`));
         for (const resolve of suspendedRequests) {

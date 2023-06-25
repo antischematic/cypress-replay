@@ -4,7 +4,7 @@ import {
     startRecording,
     stopRecording,
 } from "./record/recordRequests";
-import {interceptReplay, startReplay, stopReplay, waitForReplay} from "./replay/replayRequests";
+import {interceptReplay, startReplay, stopReplay} from "./replay/replayRequests";
 import {ReplayConfig, ReplayMode} from "./types";
 
 export default function enableCypressReplay(mode: ReplayMode | null = null, config: ReplayConfig = {}) {
@@ -17,7 +17,7 @@ export default function enableCypressReplay(mode: ReplayMode | null = null, conf
         })
 
         afterEach(function () {
-            stopRecording(this.__requestCollection, makeFilePath())
+            stopRecording(this.__requestCollection, makeFilePath(), config)
         })
     }
 
@@ -28,14 +28,11 @@ export default function enableCypressReplay(mode: ReplayMode | null = null, conf
         })
 
         afterEach(function () {
-            if (config.waitForReplay) {
-                waitForReplay(this.__requestCollection)
-            }
-            stopReplay(this.__requestCollection)
+            stopReplay(this.__requestCollection, config)
         })
     }
 }
 
 export {makeFilePath, interceptRequests, startRecording, stopRecording, isRecording} from "./record/recordRequests";
-export { startReplay, interceptReplay, stopReplay, waitForReplay, isReplaying} from "./replay/replayRequests";
+export { startReplay, interceptReplay, stopReplay, isReplaying} from "./replay/replayRequests";
 export { ReplayMode, ReplayConfig } from "./types"
