@@ -6,7 +6,6 @@ import RequestCollection from "../utility/RequestCollection";
 import sanitizeHeaders from "../utility/sanitizeHeaders";
 import createFixtureFilename from "../utility/createFixtureFilename";
 import EnvComponentManager from "../utility/EnvComponentManager";
-import Chainable = Cypress.Chainable;
 
 export function startRecording(config: ReplayConfig = {}) {
     Cypress.config('cypressReplayRecordMode' as any, ReplayMode.Recording)
@@ -32,22 +31,20 @@ export function isRecording() {
 }
 
 export function interceptRequests(requestCollection: RequestCollection, config: ReplayConfig = {}) {
-    cy.then(() => {
-        config = mergeConfig(config)
-        cy.intercept(new RegExp(config.interceptPattern || ".*"), (request: CyHttpMessages.IncomingHttpRequest) => {
-            const startTime = Date.now();
-            requestCollection.pushIncomingRequest(request, new Promise<StaticResponse>(resolve => {
-                request.on('response', (response) => {
-                    resolve({
-                        body: response.body,
-                        headers: sanitizeHeaders(response.headers),
-                        statusCode: response.statusCode,
-                        // Including a delay that matches how long the server took to response will help make tests more
-                        // deterministic.
-                        delay: Date.now() - startTime,
-                    })
+    config = mergeConfig(config)
+    cy.intercept(new RegExp(config.interceptPattern || ".*"), (request: CyHttpMessages.IncomingHttpRequest) => {
+        const startTime = Date.now();
+        requestCollection.pushIncomingRequest(request, new Promise<StaticResponse>(resolve => {
+            request.on('response', (response) => {
+                resolve({
+                    body: response.body,
+                    headers: sanitizeHeaders(response.headers),
+                    statusCode: response.statusCode,
+                    // Including a delay that matches how long the server took to response will help make tests more
+                    // deterministic.
+                    delay: Date.now() - startTime,
                 })
-            }))
-        }).as('cypress-replay')
-    })
+            })
+        }))
+    }).as('cypress-replay')
 }

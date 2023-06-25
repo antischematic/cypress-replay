@@ -5,7 +5,6 @@ import RequestCollection from "../utility/RequestCollection";
 import { createMergedFixtureFilename } from "../utility/createFixtureFilename";
 import EnvComponentManager from "../utility/EnvComponentManager";
 import Logger from "../utility/Logger";
-import Chainable = Cypress.Chainable;
 
 export function startReplay(filePath: string, configuration: Partial<ReplayConfig> = {}) {
     configuration = mergeConfig(configuration)
@@ -49,36 +48,36 @@ export function waitForReplay(collection: RequestCollection): any {
     return cy.then(() => collection.isDone() || collection.replayDone)
 }
 
+let suspendedRequests = new Set<() => void>()
+
 export function interceptReplay(requestCollection: RequestCollection, configuration: Partial<ReplayConfig> = {}) {
-    cy.then(() => {
-        configuration = mergeConfig(configuration)
-        cy.intercept(new RegExp(configuration.interceptPattern || ".*"), async (req: CyHttpMessages.IncomingHttpRequest) => {
-            const fixtureResponse = requestCollection.shiftRequest(req);
-            if (fixtureResponse && fixtureResponse.didRespond !== false) {
-                const promise = new Promise<void>((resolve) => {
-                    req.on("response", () => {
-                        resolve()
-                    })
+    configuration = mergeConfig(configuration)
+    cy.intercept(new RegExp(configuration.interceptPattern || ".*"), async (req: CyHttpMessages.IncomingHttpRequest) => {
+        const fixtureResponse = requestCollection.shiftRequest(req);
+        if (fixtureResponse && fixtureResponse.didRespond !== false) {
+            const promise = new Promise<void>((resolve) => {
+                req.on("response", () => {
+                    resolve()
                 })
+            })
 
-                requestCollection.pushReplayedRequest(promise)
+            requestCollection.pushReplayedRequest(promise)
 
-                req.reply({
-                    ...fixtureResponse,
-                    delay:
-                        configuration.responseDelayOverride !== undefined
-                            ? configuration.responseDelayOverride
-                            : fixtureResponse.delay,
-                });
-            } else {
-                req.reply({
-                    statusCode: 408,
-                    delay: 1000 * 60 * 60 * 24 * 7
-                })
-                requestCollection.checkDone()
-            }
-        }).as('cypress-replay');
-    })
+            req.reply({
+                ...fixtureResponse,
+                delay:
+                    configuration.responseDelayOverride !== undefined
+                        ? configuration.responseDelayOverride
+                        : fixtureResponse.delay,
+            });
+        } else {
+            requestCollection.checkDone()
+            await new Promise<void>((resolve) => {
+                suspendedRequests.add(resolve)
+            })
+            req.destroy()
+        }
+    }).as('cypress-replay');
 }
 
 export function isReplaying() {
@@ -89,5 +88,9 @@ export function stopReplay(collection: RequestCollection) {
     Cypress.config('cypressReplayRecordMode' as any, null)
     cy.then(() => {
         collection.logger.getAll().map((log) => cy.log(`cypress-replay: ${log.message}\n\n${JSON.stringify(log.context)}`));
+        for (const resolve of suspendedRequests) {
+            resolve()
+        }
+        suspendedRequests.clear()
     })
 }
