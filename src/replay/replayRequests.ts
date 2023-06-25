@@ -46,6 +46,8 @@ export function startReplay(filePath: string, configuration: Partial<ReplayConfi
 
 let suspendedRequests = new Set<() => void>()
 
+const FLUSH = 'http://flush'
+
 export function interceptReplay(requestCollection: RequestCollection, configuration: Partial<ReplayConfig> = {}) {
     configuration = mergeConfig(configuration)
     cy.intercept(new RegExp(configuration.interceptPattern || ".*"), async (req: CyHttpMessages.IncomingHttpRequest) => {
@@ -73,7 +75,8 @@ export function interceptReplay(requestCollection: RequestCollection, configurat
             })
             req.destroy()
         }
-    }).as('cypress-replay');
+    })
+    cy.intercept(FLUSH, { log: false, statusCode: 200, delay: 0 })
 }
 
 export function isReplaying() {
@@ -85,6 +88,7 @@ export function stopReplay(collection: RequestCollection, config: Partial<Replay
     if (config.waitForReplay) {
         cy.then(() => collection.isDone() || collection.replayDone)
     }
+    cy.window().then(window => window.fetch(FLUSH))
     cy.then(() => {
         collection.logger.getAll().map((log) => cy.log(`cypress-replay: ${log.message}\n\n${JSON.stringify(log.context)}`));
         for (const resolve of suspendedRequests) {

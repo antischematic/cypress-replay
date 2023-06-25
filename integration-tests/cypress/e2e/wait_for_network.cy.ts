@@ -28,7 +28,7 @@ function runTests() {
             })
 
             afterEach(() => {
-                stopReplay(collection, { waitForReplay: true })
+                stopReplay(collection, { waitForReplay: false })
             })
         }
     }
